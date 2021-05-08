@@ -17,5 +17,6 @@ public class Engine {
 	public void driveStraightAhead() {
 		left.setSpeed(300);
 		right.setSpeed(300);
+		print ("i moved straight ahead (speed 300)")
 	}
 }
