@@ -51,16 +51,32 @@ def getAngleInPosition(steerMotor):
     ##########
 
 
+#Possible transition functions
+def distanceToSteering(distance):
+    pass
+
+def lightToSteering(light):
+    pass
+
+
 #Function to evaluate how much to steer according to which part of the track the bot is
-def getSteeringValue(lightSensor, distanceSensor, oldLight, oldDistance, normalBrightness, normalDistance):
+#@requires everything being initialized the right way
+#@ensures motor is not changed
+
+#@returns returns a value in the domain [-70 70] which should be the angle for the wheels (and the raw sensor data)
+def getSteeringValue(lightSensor, distanceSensor, oldLight, oldDistance, normalBrightness, normalDistance, rot):
     light = lightSensor.reflection()
     distance = distanceSensor.distance()
 
     ######################
     ###   T O    D O   ###
     ######################
-    lightToSteering = 1
+    #This should convert the steering value to a domain [-70 70] or [0 140] and the last step is to shift it by 70 degree
+    #Simple formula is if sensor gets data from [a b] equaly spaced (otherwise interpolate it with a polynom) 140/(b-a) and shift by 70 + a
+    lightToSteering = 1 
     distanceToSteering = 1
+    shiftLight = 0
+    shiftDistance = 0
 
     ######################
 
@@ -77,13 +93,22 @@ def getSteeringValue(lightSensor, distanceSensor, oldLight, oldDistance, normalB
     
     
     
-    #Could be saved but I'm thinking about changing this somewhere else
+    #Could be done in one step but I'm thinking about changing the (findModeTask) somewhere else
     if mode == 0:
         steering = lightToSteering * (normalBrightness - light)
+        change = lightToSteering * abs(light-oldLight)
     elif mode == 1:
         steering = distanceToSteering * (normalDistance - distance)
+        change = distanceToSteering * abs(distance-oldDistance)
     elif mode == 2:
         steering = 1/2 *( lightToSteering * (normalBrightness - light) +  distanceToSteering * (normalDistance - distance))
+        change = 1/2 * (lightToSteering * abs(light-oldLight) + distanceToSteering * abs(distance-oldDistance))
+
+    #Final calculation
+
+    #If the change is high don't steer as strong
+    
+    #If the rotation is already high enough or to high dont change to strong
 
     return steering, light, distance
     
@@ -111,10 +136,11 @@ while True:
     
     rot = steerMotor.angle() - angleError
 
-    steering, light, distance = getSteeringValue(lightSensor, distanceSensor, light, distance, normalBrightness, normalDistance)
+    #To return light and distance is a convention to use it in derivative and also maybe somewhere later
+    steering, light, distance = getSteeringValue(lightSensor, distanceSensor, light, distance, normalBrightness, normalDistance,rot)
 
     
     if (-maxRot < rot & rot < maxRot):
-        steerMotor.run_angle(90, steering)
-        #try steerMotor.run_target and change getSteeringValue
-    
+        steerMotor.run_target(90, steering)
+        #try steerMotor.run_angle -angleError and change getSteeringValue
+    wait(7)
