@@ -74,6 +74,7 @@ motorD = Motor(Port.D)
 
 lenkMotor = Motor(Port.B)
 
+obstacle_sensor = UltrasonicSensor(Port.S3)
 lightSensor = ColorSensor(Port.S4)
 
 execute(motorA, motorD, lenkMotor, lightSensor, ev3)

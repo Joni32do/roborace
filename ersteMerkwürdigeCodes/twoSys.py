@@ -73,9 +73,10 @@ def getSteeringValue(lightSensor, distanceSensor, oldLight, oldDistance, normalB
     ######################
     #This should convert the steering value to a domain [-70 70] or [0 140] and the last step is to shift it by 70 degree
     #Simple formula is if sensor gets data from [a b] equaly spaced (otherwise interpolate it with a polynom) 140/(b-a) and shift by 70 + a
-    lightToSteering = 1 
+    #Following is my first guess
+    lightToSteering = 1.5 
     distanceToSteering = 1
-    shiftLight = 0
+    shiftLight = 45
     shiftDistance = 0
 
     ######################
@@ -95,20 +96,28 @@ def getSteeringValue(lightSensor, distanceSensor, oldLight, oldDistance, normalB
     
     #Could be done in one step but I'm thinking about changing the (findModeTask) somewhere else
     if mode == 0:
-        steering = lightToSteering * (normalBrightness - light)
+        steering = lightToSteering * (normalBrightness - light) - shiftLight
         change = lightToSteering * abs(light-oldLight)
     elif mode == 1:
-        steering = distanceToSteering * (normalDistance - distance)
+        steering = distanceToSteering * (normalDistance - distance) - shiftDistance
         change = distanceToSteering * abs(distance-oldDistance)
     elif mode == 2:
-        steering = 1/2 *( lightToSteering * (normalBrightness - light) +  distanceToSteering * (normalDistance - distance))
+        lightSteering = lightToSteering * (normalBrightness - light) - shiftLight
+        distanceSteering = distanceToSteering * (normalDistance - distance) - shiftDistance
+        steering = 1/2 *( lightSteering + distanceSteering)
         change = 1/2 * (lightToSteering * abs(light-oldLight) + distanceToSteering * abs(distance-oldDistance))
 
     #Final calculation
 
     #If the change is high don't steer as strong
-    
+    changeFactor = 1/(1 + change) #TODO
+    limitFactor = (1 - rot/maxRot) #TODO
     #If the rotation is already high enough or to high dont change to strong
+    steering = limitFactor * changeFactor * (steering - rot)
+
+    #If we use steerMotor.run_angle: We don't need
+    steering = steering + rot
+    #This line of code
 
     return steering, light, distance
     
